@@ -18,11 +18,11 @@ _HIGHLIGHT_COLORS = [
     (100, 220, 140, 210),
 ]
 
-_PAD_X = 22      # horizontal padding inside highlight pill
-_PAD_Y = 10      # vertical padding inside highlight pill
-_LINE_GAP = 12   # gap between consecutive highlighted lines
+_PAD_X = 16      # horizontal padding inside highlight pill
+_PAD_Y = 6       # vertical padding inside highlight pill
+_LINE_GAP = 7    # gap between consecutive highlighted lines
 _BLOCK_GAP = 52  # gap between title block and subtitle block
-_RADIUS = 14     # corner radius of highlight pill
+_RADIUS = 12     # corner radius of highlight pill
 
 
 def _fit_background(image: Image.Image) -> Image.Image:
@@ -91,9 +91,9 @@ def create_story(
 
     background = _fit_background(Image.open(background_path))
 
-    title_font = _load_font(font_path, 86)
-    subtitle_font = _load_font(font_path, 58)
-    brand_font = _load_font(font_path, 34)
+    title_font = _load_font(font_path, 70)
+    subtitle_font = _load_font(font_path, 50)
+    brand_font = _load_font(font_path, 30)
 
     title_lines = textwrap.wrap(title_text.strip(), width=16)
     subtitle_lines = textwrap.wrap(subtitle_text.strip(), width=24) if subtitle_text.strip() else []
