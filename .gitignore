@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Local secrets - never commit these
+.env
+*.json
+secrets/
+
+# Generated story images
+output/*.png
+output/*.jpg
+draft_info.txt
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

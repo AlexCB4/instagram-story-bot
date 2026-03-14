@@ -1,0 +1,6 @@
+openai==1.68.2
+requests==2.32.3
+Pillow==11.1.0
+gspread==6.2.0
+google-auth==2.38.0
+PyYAML==6.0.2

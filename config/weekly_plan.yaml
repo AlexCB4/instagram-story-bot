@@ -1,0 +1,55 @@
+monday:
+  topic: "Flowers"
+  source: "pexels"
+  search_query: "beautiful flowers nature"
+  prompt_style: "inspirational"
+  hashtags: ["#flowers", "#nature", "#beauty"]
+  cta: "Cual es tu flor favorita?"
+
+tuesday:
+  topic: "Fashion Trends"
+  source: "openai"
+  ai_prompt: "Modern fashion outfit, minimalist style, neutral colors, studio lighting, vertical 9:16 composition, negative space for title"
+  prompt_style: "trendy"
+  hashtags: ["#fashion", "#style", "#trends"]
+  cta: "Tu lo usarias?"
+
+wednesday:
+  topic: "Our Product"
+  source: "owned"
+  folder: "assets/owned"
+  prompt_style: "product"
+  hashtags: ["#product", "#shop"]
+  cta: "Escribenos para mas info"
+
+thursday:
+  topic: "Behind the Scenes"
+  source: "owned"
+  folder: "assets/owned"
+  prompt_style: "casual"
+  hashtags: ["#behindthescenes", "#bts"]
+  cta: "Quieres ver mas?"
+
+friday:
+  topic: "Weekend Vibes"
+  source: "pexels"
+  search_query: "weekend relaxation lifestyle"
+  prompt_style: "fun"
+  hashtags: ["#weekend", "#friday", "#vibes"]
+  cta: "Que planes tienes?"
+
+saturday:
+  topic: "Community"
+  source: "pexels"
+  search_query: "people together community"
+  prompt_style: "warm"
+  hashtags: ["#community", "#together"]
+  cta: "Etiqueta a alguien"
+
+sunday:
+  topic: "Inspiration"
+  source: "openai"
+  ai_prompt: "Inspirational scene, sunrise, peaceful mood, soft light, vertical composition, space for text"
+  prompt_style: "motivational"
+  hashtags: ["#sunday", "#inspiration", "#motivation"]
+  cta: "Empieza tu semana con fuerza"
