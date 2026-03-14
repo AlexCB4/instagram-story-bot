@@ -3,7 +3,6 @@ monday:
   source: "openai"
   ai_prompt: "Ultra-detailed macro photograph of a single stunning flower in full bloom, soft natural light, pastel background, dreamy bokeh, vertical 9:16 composition, negative space at top for text overlay, editorial quality"
   prompt_style: "motivational"
-  hashtags: []
   cta: "Feliz semana! Una nueva semana llena de flores te espera"
 
 tuesday:
@@ -11,7 +10,6 @@ tuesday:
   source: "owned"
   folder: "assets/owned"
   prompt_style: "product"
-  hashtags: ["#flores", "#floreria", "#ramos", "#regalo"]
   cta: "Escribenos para hacer tu pedido"
 
 wednesday:
@@ -19,7 +17,6 @@ wednesday:
   source: "pexels"
   search_query: "beautiful single flower close up nature"
   prompt_style: "fun"
-  hashtags: ["#flores", "#curiosidades", "#naturaleza", "#flordeldia"]
   cta: "Sabias esto? Cuentanos en comentarios"
 
 thursday:
@@ -27,7 +24,6 @@ thursday:
   source: "openai"
   ai_prompt: "Modern fashion outfit with floral elements, minimalist style, neutral and pastel colors, studio lighting, vertical 9:16 composition, negative space at top for title text"
   prompt_style: "trendy"
-  hashtags: ["#moda", "#estilo", "#tendencias", "#floralmoda"]
   cta: "Te gustaria este look?"
 
 friday:
@@ -35,7 +31,6 @@ friday:
   source: "owned"
   folder: "assets/owned"
   prompt_style: "stylish"
-  hashtags: ["#viernes", "#flores", "#floreria", "#findeSemana"]
   cta: "El mejor regalo para este fin de semana"
 
 saturday:
@@ -43,7 +38,6 @@ saturday:
   source: "owned"
   folder: "assets/owned"
   prompt_style: "product"
-  hashtags: ["#flores", "#arreglosflorales", "#floreria", "#sabado"]
   cta: "Haz tu pedido hoy"
 
 sunday:
@@ -51,5 +45,4 @@ sunday:
   source: "openai"
   ai_prompt: "Peaceful Sunday morning scene with flowers on a table, warm golden light, cozy atmosphere, vertical 9:16 composition, soft bokeh, negative space at top for text"
   prompt_style: "warm"
-  hashtags: ["#domingo", "#flores", "#descanso", "#semana"]
   cta: "Feliz domingo! Recarga energia para la semana"
