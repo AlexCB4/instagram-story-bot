@@ -95,8 +95,8 @@ def create_story(
     subtitle_font = _load_font(font_path, 50)
     brand_font = _load_font(font_path, 30)
 
-    title_lines = textwrap.wrap(title_text.strip(), width=16)
-    subtitle_lines = textwrap.wrap(subtitle_text.strip(), width=24) if subtitle_text.strip() else []
+    title_lines = textwrap.wrap(" ".join(title_text.split()), width=16)
+    subtitle_lines = textwrap.wrap(" ".join(subtitle_text.split()), width=24) if subtitle_text.strip() else []
 
     # Measure using a scratch draw (1×1 px) so positioning is independent of compositing order
     scratch = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
