@@ -18,7 +18,7 @@ _HIGHLIGHT_COLORS = [
     (100, 220, 140, 210),
 ]
 
-_PAD_X = 16      # horizontal padding inside highlight pill
+_PAD_X = 12      # horizontal padding inside highlight pill
 _PAD_Y = 6       # vertical padding inside highlight pill
 _LINE_GAP = 7    # gap between consecutive highlighted lines
 _BLOCK_GAP = 52  # gap between title block and subtitle block
@@ -95,8 +95,8 @@ def create_story(
     subtitle_font = _load_font(font_path, 50)
     brand_font = _load_font(font_path, 30)
 
-    title_lines = textwrap.wrap(" ".join(title_text.split()), width=16)
-    subtitle_lines = textwrap.wrap(" ".join(subtitle_text.split()), width=24) if subtitle_text.strip() else []
+    title_lines = textwrap.wrap(" ".join(title_text.split()), width=20)
+    subtitle_lines = textwrap.wrap(" ".join(subtitle_text.split()), width=30) if subtitle_text.strip() else []
 
     # Measure using a scratch draw (1×1 px) so positioning is independent of compositing order
     scratch = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
