@@ -57,13 +57,13 @@ def create_story(
     image = Image.alpha_composite(background.convert("RGBA"), overlay).convert("RGB")
     draw = ImageDraw.Draw(image)
 
-    title_font = _load_font(font_path, 86)
-    subtitle_font = _load_font(font_path, 48)
-    cta_font = _load_font(font_path, 40)
-    brand_font = _load_font(font_path, 28)
+    title_font = _load_font(font_path, 108)
+    subtitle_font = _load_font(font_path, 72)
+    cta_font = _load_font(font_path, 60)
+    brand_font = _load_font(font_path, 42)
 
-    wrapped_title = textwrap.fill(title_text.strip(), width=18)
-    wrapped_subtitle = textwrap.fill(subtitle_text.strip(), width=28) if subtitle_text.strip() else ""
+    wrapped_title = textwrap.fill(title_text.strip(), width=16)
+    wrapped_subtitle = textwrap.fill(subtitle_text.strip(), width=24) if subtitle_text.strip() else ""
 
     title_box = draw.multiline_textbbox((0, 0), wrapped_title, font=title_font, spacing=10, align="center")
     title_x = (STORY_WIDTH - (title_box[2] - title_box[0])) // 2

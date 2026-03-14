@@ -10,13 +10,14 @@ def generate_caption(api_key: str, topic: str, style: str, cta: str, max_length:
 Topic: {topic}
 Style: {style}
 Call to action: {cta}
-Max length: {max_length} characters
+Max length: 30 words total
 
 Requirements:
 - casual, natural Spanish
-- 1 or 2 emojis maximum
-- concise enough for an Instagram story
-- return only the caption text
+- maximum 30 words, strictly enforced
+- 1 emoji maximum
+- concise enough to display as large text on an Instagram story image
+- return only the caption text, no hashtags
 """
     response = client.chat.completions.create(
         model="gpt-4o-mini",
