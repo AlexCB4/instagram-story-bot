@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from src.gsheet import SheetManager
 from src.settings import require_env
 from src.state_store import StateStore
@@ -33,6 +35,7 @@ def main() -> None:
     updates = get_updates(bot_token, offset=last_update_id + 1)
 
     max_update_id = last_update_id
+    regen_requested = False
     for update in updates:
         update_id = int(update.get("update_id", 0))
         max_update_id = max(max_update_id, update_id)
@@ -51,6 +54,8 @@ def main() -> None:
             continue
 
         response = process_command(command, parts[1].strip(), sheet)
+        if command == "regen" and response.startswith("Marked"):
+            regen_requested = True
         send_message(bot_token, chat_id, response)
 
     if max_update_id > last_update_id:
@@ -58,6 +63,11 @@ def main() -> None:
         print(f"Stored last processed update_id={max_update_id}")
     else:
         print("No new Telegram updates to process.")
+
+    github_output = os.environ.get("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a", encoding="utf-8") as handle:
+            handle.write(f"regen_requested={'true' if regen_requested else 'false'}\n")
 
 
 if __name__ == "__main__":
