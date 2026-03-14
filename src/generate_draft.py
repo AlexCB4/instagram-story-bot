@@ -111,7 +111,6 @@ def main() -> None:
         output_path=story_path,
         title_text=title_text,
         subtitle_text=subtitle_text,
-        cta_text=plan.get("cta", ""),
         brand_text=BRAND_HANDLE,
         font_path=DEFAULT_FONT_PATH,
     )

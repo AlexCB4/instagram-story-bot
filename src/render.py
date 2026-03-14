@@ -9,6 +9,20 @@ from PIL import Image, ImageDraw, ImageFont
 STORY_WIDTH = 1080
 STORY_HEIGHT = 1920
 
+# Instagram-style highlight colours (RGBA): soft pink, orange, blue, green
+_HIGHLIGHT_COLORS = [
+    (255, 182, 193, 210),
+    (255, 164, 84,  210),
+    (100, 176, 255, 210),
+    (100, 220, 140, 210),
+]
+
+_PAD_X = 22      # horizontal padding inside highlight pill
+_PAD_Y = 10      # vertical padding inside highlight pill
+_LINE_GAP = 12   # gap between consecutive highlighted lines
+_BLOCK_GAP = 52  # gap between title block and subtitle block
+_RADIUS = 14     # corner radius of highlight pill
+
 
 def _fit_background(image: Image.Image) -> Image.Image:
     image = image.convert("RGB")
@@ -32,57 +46,91 @@ def _load_font(font_path: str | Path, size: int):
         return ImageFont.load_default()
 
 
+def _layout_lines(
+    draw: ImageDraw.ImageDraw,
+    lines: list[str],
+    font,
+    start_y: int,
+    color_start: int,
+) -> tuple[list[tuple], list[tuple], int, int]:
+    """Return (highlight_rects, text_items, end_y, next_color_idx).
+
+    highlight_rects: (x1, y1, x2, y2, rgba_color)
+    text_items:      (x, y, text, font)
+    """
+    rects: list[tuple] = []
+    texts: list[tuple] = []
+    y = start_y
+    color_idx = color_start
+    for line in lines:
+        if not line.strip():
+            y += font.size // 2
+            continue
+        bbox = draw.textbbox((0, 0), line, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+        rect_w = text_w + _PAD_X * 2
+        rect_h = text_h + _PAD_Y * 2
+        rx = (STORY_WIDTH - rect_w) // 2
+        rects.append((rx, y, rx + rect_w, y + rect_h, _HIGHLIGHT_COLORS[color_idx % len(_HIGHLIGHT_COLORS)]))
+        texts.append((rx + _PAD_X - bbox[0], y + _PAD_Y - bbox[1], line, font))
+        y += rect_h + _LINE_GAP
+        color_idx += 1
+    end_y = y - _LINE_GAP if lines else start_y
+    return rects, texts, end_y, color_idx
+
+
 def create_story(
     background_path: str | Path,
     output_path: str | Path,
     title_text: str,
     subtitle_text: str,
-    cta_text: str,
     brand_text: str,
     font_path: str | Path,
 ) -> Path:
     background = _fit_background(Image.open(background_path))
-    overlay = Image.new("RGBA", (STORY_WIDTH, STORY_HEIGHT), (0, 0, 0, 0))
-    overlay_draw = ImageDraw.Draw(overlay)
-
-    for y in range(560):
-        alpha = int((y / 560) * 170)
-        overlay_draw.rectangle([(0, y), (STORY_WIDTH, y + 1)], fill=(0, 0, 0, alpha))
-
-    for y in range(560):
-        y_pos = STORY_HEIGHT - 560 + y
-        alpha = int(((560 - y) / 560) * 185)
-        overlay_draw.rectangle([(0, y_pos), (STORY_WIDTH, y_pos + 1)], fill=(0, 0, 0, alpha))
-
-    image = Image.alpha_composite(background.convert("RGBA"), overlay).convert("RGB")
-    draw = ImageDraw.Draw(image)
 
     title_font = _load_font(font_path, 108)
     subtitle_font = _load_font(font_path, 72)
-    cta_font = _load_font(font_path, 60)
     brand_font = _load_font(font_path, 42)
 
-    wrapped_title = textwrap.fill(title_text.strip(), width=16)
-    wrapped_subtitle = textwrap.fill(subtitle_text.strip(), width=24) if subtitle_text.strip() else ""
+    title_lines = textwrap.wrap(title_text.strip(), width=16)
+    subtitle_lines = textwrap.wrap(subtitle_text.strip(), width=24) if subtitle_text.strip() else []
 
-    title_box = draw.multiline_textbbox((0, 0), wrapped_title, font=title_font, spacing=10, align="center")
-    title_x = (STORY_WIDTH - (title_box[2] - title_box[0])) // 2
-    draw.multiline_text((title_x, 170), wrapped_title, font=title_font, fill="white", spacing=10, align="center")
+    # Measure using a scratch draw (1×1 px) so positioning is independent of compositing order
+    scratch = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
 
-    if wrapped_subtitle:
-        subtitle_box = draw.multiline_textbbox((0, 0), wrapped_subtitle, font=subtitle_font, spacing=8, align="center")
-        subtitle_x = (STORY_WIDTH - (subtitle_box[2] - subtitle_box[0])) // 2
-        draw.multiline_text((subtitle_x, 450), wrapped_subtitle, font=subtitle_font, fill="white", spacing=8, align="center")
+    all_rects: list[tuple] = []
+    all_texts: list[tuple] = []
 
-    if cta_text.strip():
-        cta_box = draw.textbbox((0, 0), cta_text, font=cta_font)
-        cta_x = (STORY_WIDTH - (cta_box[2] - cta_box[0])) // 2
-        draw.text((cta_x, STORY_HEIGHT - 270), cta_text, font=cta_font, fill="white")
+    t_rects, t_texts, title_end_y, color_next = _layout_lines(scratch, title_lines, title_font, 180, 0)
+    all_rects.extend(t_rects)
+    all_texts.extend(t_texts)
+
+    if subtitle_lines:
+        s_rects, s_texts, _, color_next = _layout_lines(
+            scratch, subtitle_lines, subtitle_font, title_end_y + _BLOCK_GAP, color_next
+        )
+        all_rects.extend(s_rects)
+        all_texts.extend(s_texts)
 
     if brand_text.strip():
-        brand_box = draw.textbbox((0, 0), brand_text, font=brand_font)
-        brand_x = (STORY_WIDTH - (brand_box[2] - brand_box[0])) // 2
-        draw.text((brand_x, STORY_HEIGHT - 110), brand_text, font=brand_font, fill="#D9D9D9")
+        b_rects, b_texts, _, _ = _layout_lines(
+            scratch, [brand_text.strip()], brand_font, STORY_HEIGHT - 140, color_next
+        )
+        all_rects.extend(b_rects)
+        all_texts.extend(b_texts)
+
+    # Draw semi-transparent highlight pills onto a transparent overlay, then composite
+    overlay = Image.new("RGBA", (STORY_WIDTH, STORY_HEIGHT), (0, 0, 0, 0))
+    overlay_draw = ImageDraw.Draw(overlay)
+    for (x1, y1, x2, y2, color) in all_rects:
+        overlay_draw.rounded_rectangle([(x1, y1), (x2, y2)], radius=_RADIUS, fill=color)
+
+    image = Image.alpha_composite(background.convert("RGBA"), overlay).convert("RGB")
+    draw = ImageDraw.Draw(image)
+    for (tx, ty, text, font) in all_texts:
+        draw.text((tx, ty), text, font=font, fill="white")
 
     destination = Path(output_path)
     destination.parent.mkdir(parents=True, exist_ok=True)
