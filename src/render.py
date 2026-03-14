@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 import textwrap
 from pathlib import Path
 
@@ -51,9 +52,9 @@ def _layout_lines(
     lines: list[str],
     font,
     start_y: int,
-    color_start: int,
-) -> tuple[list[tuple], list[tuple], int, int]:
-    """Return (highlight_rects, text_items, end_y, next_color_idx).
+    highlight_color: tuple,
+) -> tuple[list[tuple], list[tuple], int]:
+    """Return (highlight_rects, text_items, end_y).
 
     highlight_rects: (x1, y1, x2, y2, rgba_color)
     text_items:      (x, y, text, font)
@@ -61,7 +62,6 @@ def _layout_lines(
     rects: list[tuple] = []
     texts: list[tuple] = []
     y = start_y
-    color_idx = color_start
     for line in lines:
         if not line.strip():
             y += font.size // 2
@@ -72,12 +72,11 @@ def _layout_lines(
         rect_w = text_w + _PAD_X * 2
         rect_h = text_h + _PAD_Y * 2
         rx = (STORY_WIDTH - rect_w) // 2
-        rects.append((rx, y, rx + rect_w, y + rect_h, _HIGHLIGHT_COLORS[color_idx % len(_HIGHLIGHT_COLORS)]))
+        rects.append((rx, y, rx + rect_w, y + rect_h, highlight_color))
         texts.append((rx + _PAD_X - bbox[0], y + _PAD_Y - bbox[1], line, font))
         y += rect_h + _LINE_GAP
-        color_idx += 1
     end_y = y - _LINE_GAP if lines else start_y
-    return rects, texts, end_y, color_idx
+    return rects, texts, end_y
 
 
 def create_story(
@@ -88,11 +87,13 @@ def create_story(
     brand_text: str,
     font_path: str | Path,
 ) -> Path:
+    highlight_color = random.choice(_HIGHLIGHT_COLORS)
+
     background = _fit_background(Image.open(background_path))
 
-    title_font = _load_font(font_path, 108)
-    subtitle_font = _load_font(font_path, 72)
-    brand_font = _load_font(font_path, 42)
+    title_font = _load_font(font_path, 86)
+    subtitle_font = _load_font(font_path, 58)
+    brand_font = _load_font(font_path, 34)
 
     title_lines = textwrap.wrap(title_text.strip(), width=16)
     subtitle_lines = textwrap.wrap(subtitle_text.strip(), width=24) if subtitle_text.strip() else []
@@ -103,20 +104,23 @@ def create_story(
     all_rects: list[tuple] = []
     all_texts: list[tuple] = []
 
-    t_rects, t_texts, title_end_y, color_next = _layout_lines(scratch, title_lines, title_font, 180, 0)
+    # Top third: title (must stay above y=640)
+    t_rects, t_texts, _ = _layout_lines(scratch, title_lines, title_font, 140, highlight_color)
     all_rects.extend(t_rects)
     all_texts.extend(t_texts)
 
+    # Bottom third: subtitle starts at 67 % mark (y≈1280), keeping centre clear
     if subtitle_lines:
-        s_rects, s_texts, _, color_next = _layout_lines(
-            scratch, subtitle_lines, subtitle_font, title_end_y + _BLOCK_GAP, color_next
+        subtitle_start_y = int(STORY_HEIGHT * 0.67)
+        s_rects, s_texts, _ = _layout_lines(
+            scratch, subtitle_lines, subtitle_font, subtitle_start_y, highlight_color
         )
         all_rects.extend(s_rects)
         all_texts.extend(s_texts)
 
     if brand_text.strip():
-        b_rects, b_texts, _, _ = _layout_lines(
-            scratch, [brand_text.strip()], brand_font, STORY_HEIGHT - 140, color_next
+        b_rects, b_texts, _ = _layout_lines(
+            scratch, [brand_text.strip()], brand_font, STORY_HEIGHT - 110, highlight_color
         )
         all_rects.extend(b_rects)
         all_texts.extend(b_texts)
