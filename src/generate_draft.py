@@ -13,7 +13,7 @@ from src.settings import DEFAULT_FONT_PATH, OUTPUT_DIR, OWNED_ASSETS_DIR, WEEKLY
 from src.sources import openai_image, openai_text, pexels
 from src.telegram_api import extract_photo_file_id, send_photo
 
-BRAND_HANDLE = "@your_instagram_handle"
+BRAND_HANDLE = "@parterre_c"
 
 
 def load_plan() -> dict:
@@ -30,7 +30,7 @@ def pick_owned_image(folder_value: str | None) -> tuple[Path, str]:
     folder = Path(folder_value) if folder_value else OWNED_ASSETS_DIR
     if not folder.is_absolute():
         folder = OWNED_ASSETS_DIR.parent.parent / folder
-    images = [item for item in folder.iterdir() if item.suffix.lower() in {".jpg", ".jpeg", ".png"}]
+    images = [item for item in folder.iterdir() if item.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}]
     if not images:
         raise RuntimeError(f"No owned images found in {folder}")
     return random.choice(images), "Own photo"
