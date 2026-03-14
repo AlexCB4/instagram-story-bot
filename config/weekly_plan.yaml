@@ -34,7 +34,7 @@ friday:
   cta: "El mejor regalo para este fin de semana"
 
 saturday:
-  topic: "Nuestros Arreglos"
+  topic: "Nuestros Pendientes de Flores Naturales"
   source: "owned"
   folder: "assets/owned"
   prompt_style: "product"
