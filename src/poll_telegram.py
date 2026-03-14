@@ -5,7 +5,7 @@ from src.settings import require_env
 from src.state_store import StateStore
 from src.telegram_api import get_updates, send_message
 
-ALLOWED_COMMANDS = {"approve", "reject", "regen"}
+ALLOWED_COMMANDS = {"approve", "reject", "regen", "status"}
 
 
 def process_command(command: str, date_str: str, sheet: SheetManager) -> str:
@@ -18,6 +18,15 @@ def process_command(command: str, date_str: str, sheet: SheetManager) -> str:
     if command == "regen":
         updated = sheet.update_story_status(date_str, "regenerate")
         return f"Marked {date_str} for regeneration." if updated else f"No row found for {date_str}."
+    if command == "status":
+        row = sheet.get_row_by_date(date_str)
+        if row is None:
+            return f"No row found for {date_str}."
+        return (
+            f"Status for {date_str}: {row.get('status', 'unknown')}\n"
+            f"Topic: {row.get('topic', '')}\n"
+            f"Source: {row.get('source_type', '')}"
+        )
     return "Unsupported command."
 
 
@@ -47,7 +56,11 @@ def main() -> None:
 
         parts = text.split(maxsplit=1)
         command = parts[0][1:].split("@", 1)[0].lower()
-        if command not in ALLOWED_COMMANDS or len(parts) != 2:
+        if command not in ALLOWED_COMMANDS:
+            continue
+
+        if len(parts) != 2:
+            send_message(bot_token, chat_id, "Usage: /approve YYYY-MM-DD, /reject YYYY-MM-DD, /regen YYYY-MM-DD, /status YYYY-MM-DD")
             continue
 
         response = process_command(command, parts[1].strip(), sheet)
