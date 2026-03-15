@@ -1,7 +1,7 @@
 monday:
   topic: "Inspiración floral del lunes"
   source: "openai"
-  ai_prompt: "Ultra-detailed macro photograph of a single stunning flower in full bloom, soft natural light, pastel background, dreamy bokeh, vertical 9:16 composition, negative space at top for text overlay, editorial quality"
+  ai_prompt: "Ultra-detailed macro photograph of a single stunning flower in full bloom, soft natural light, luminous airy mood, blush and cream pastel background, dreamy bokeh, vertical 9:16 composition, negative space at top for text overlay, editorial quality"
   prompt_style: "motivational"
   cta: "Feliz semana! Una nueva semana llena de flores te espera"
 
@@ -22,7 +22,7 @@ wednesday:
 thursday:
   topic: "Tendencias de moda floral"
   source: "openai"
-  ai_prompt: "Modern fashion outfit with floral elements, minimalist style, neutral and pastel colors, studio lighting, vertical 9:16 composition, negative space at top for title text"
+  ai_prompt: "Modern fashion outfit with floral elements, minimalist editorial style, light pastel palette, blush peach sage and sky-blue accents, soft studio lighting, airy bright atmosphere, vertical 9:16 composition, negative space at top for title text"
   prompt_style: "trendy"
   cta: "Te gustaria este look?"
 
@@ -43,6 +43,6 @@ saturday:
 sunday:
   topic: "Reflexion dominical"
   source: "openai"
-  ai_prompt: "Peaceful Sunday morning scene with flowers on a table, warm golden light, cozy atmosphere, vertical 9:16 composition, soft bokeh, negative space at top for text"
+  ai_prompt: "Peaceful Sunday morning scene with flowers on a table, soft morning light, pastel cream and blush tones, airy cozy atmosphere, vertical 9:16 composition, soft bokeh, negative space at top for text"
   prompt_style: "warm"
   cta: "Feliz domingo! Recarga energia para la semana"

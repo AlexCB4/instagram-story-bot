@@ -6,11 +6,18 @@ import requests
 from openai import OpenAI
 
 
+PASTEL_STYLE_SUFFIX = (
+    " Use a light, airy, elegant visual style with a soft pastel color palette."
+    " Favor cream, blush pink, peach, sage, sky blue, and warm off-white tones."
+    " Avoid dark, saturated, neon, harsh, or heavy contrast colors."
+)
+
+
 def generate_image(api_key: str, prompt: str, size: str = "1024x1536") -> str:
     client = OpenAI(api_key=api_key)
     response = client.images.generate(
         model="gpt-image-1",
-        prompt=prompt,
+        prompt=f"{prompt.rstrip()}{PASTEL_STYLE_SUFFIX}",
         size=size,
     )
     image_base64 = response.data[0].b64_json

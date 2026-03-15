@@ -3,6 +3,10 @@ from __future__ import annotations
 from openai import OpenAI
 
 
+def _normalize_caption_whitespace(text: str) -> str:
+    return " ".join(text.split())
+
+
 def generate_caption(api_key: str, topic: str, style: str, cta: str, max_length: int = 180) -> str:
     client = OpenAI(api_key=api_key)
     prompt = f"""Create a short Instagram story caption in Spanish.
@@ -17,6 +21,7 @@ Requirements:
 - maximum 30 words, strictly enforced
 - 1 emoji maximum
 - concise enough to display as large text on an Instagram story image
+- use single spaces only between words and after punctuation
 - return only the caption text, no hashtags
 """
     response = client.chat.completions.create(
@@ -28,4 +33,4 @@ Requirements:
         max_tokens=120,
         temperature=0.8,
     )
-    return (response.choices[0].message.content or "").strip()
+    return _normalize_caption_whitespace((response.choices[0].message.content or "").strip())
