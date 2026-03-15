@@ -45,6 +45,16 @@ def caption_parts(caption: str) -> tuple[str, str]:
     return normalized[0], " ".join(normalized[1:])
 
 
+def _pick_value(value, default: str = "") -> str:
+    if isinstance(value, list):
+        options = [str(item).strip() for item in value if str(item).strip()]
+        return random.choice(options) if options else default
+    if value is None:
+        return default
+    text = str(value).strip()
+    return text if text else default
+
+
 def build_telegram_caption(date_str: str, topic: str, full_caption: str) -> str:
     return (
         f"Draft for {date_str}\n"
@@ -77,16 +87,30 @@ def main() -> None:
         raise RuntimeError(f"No plan configured for {weekday_key}")
 
     source_type = plan["source"]
+    topic_text = _pick_value(plan.get("topic"), "Story")
+    style_text = _pick_value(plan.get("prompt_style"), "friendly")
+    cta_text = _pick_value(plan.get("cta"), "")
+    caption_variation = _pick_value(
+        plan.get("caption_variations"),
+        "Use fresh wording and a slightly different angle from previous posts.",
+    )
     background_path = OUTPUT_DIR / f"background_{today}.png"
     attribution = ""
 
     if source_type == "pexels":
         pexels_key = require_env("PEXELS_API_KEY")
-        result = pexels.search_image(pexels_key, plan["search_query"])
+        result = pexels.search_image(pexels_key, _pick_value(plan.get("search_query"), "flowers"))
         pexels.download_image(result["url"], background_path)
         attribution = result["attribution"]
     elif source_type == "openai":
-        image_base64 = openai_image.generate_image(openai_key, plan["ai_prompt"])
+        ai_prompt = _pick_value(plan.get("ai_prompt"))
+        if not ai_prompt:
+            raise RuntimeError("Missing ai_prompt for openai source")
+        image_variation = _pick_value(
+            plan.get("image_variations"),
+            "Use a composition and framing different from recent posts.",
+        )
+        image_base64 = openai_image.generate_image(openai_key, ai_prompt, variation_hint=image_variation)
         openai_image.save_base64_image(image_base64, background_path)
         attribution = "Generated with OpenAI"
     elif source_type == "owned":
@@ -97,9 +121,10 @@ def main() -> None:
 
     caption = openai_text.generate_caption(
         api_key=openai_key,
-        topic=plan["topic"],
-        style=plan.get("prompt_style", "friendly"),
-        cta=plan.get("cta", ""),
+        topic=topic_text,
+        style=style_text,
+        cta=cta_text,
+        variation_hint=caption_variation,
     )
     hashtags = " ".join(plan.get("hashtags", []))
     full_caption = caption if not hashtags else f"{caption}\n\n{hashtags}"
@@ -133,7 +158,7 @@ def main() -> None:
         caption=(
             "Option 1: text at top\n"
             "Option 2: text at bottom\n\n"
-            + build_telegram_caption(today, plan["topic"], full_caption)
+            + build_telegram_caption(today, topic_text, full_caption)
         ),
     )
     telegram_message = telegram_messages[-1]
@@ -141,7 +166,7 @@ def main() -> None:
     row = {
         "date": today,
         "weekday": weekday,
-        "topic": plan["topic"],
+        "topic": topic_text,
         "source_type": source_type,
         "status": "pending_approval",
         "caption": full_caption,

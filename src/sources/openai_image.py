@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import random
 
 import requests
 from openai import OpenAI
@@ -12,12 +13,21 @@ PASTEL_STYLE_SUFFIX = (
     " Avoid dark, saturated, neon, or harsh contrast colors."
 )
 
+IMAGE_VARIATION_HINTS = [
+    "Use a macro composition with delicate depth of field.",
+    "Use a clean editorial composition with soft window light.",
+    "Use a dreamy bokeh background with airy negative space.",
+    "Use a minimalist composition with gentle textures.",
+    "Use a natural candid composition with subtle motion.",
+]
 
-def generate_image(api_key: str, prompt: str, size: str = "1024x1536") -> str:
+
+def generate_image(api_key: str, prompt: str, size: str = "1024x1536", variation_hint: str | None = None) -> str:
     client = OpenAI(api_key=api_key)
+    chosen_hint = variation_hint or random.choice(IMAGE_VARIATION_HINTS)
     response = client.images.generate(
         model="gpt-image-1",
-        prompt=f"{prompt.rstrip()}{PASTEL_STYLE_SUFFIX}",
+        prompt=f"{prompt.rstrip()} {chosen_hint}{PASTEL_STYLE_SUFFIX}",
         size=size,
     )
     image_base64 = response.data[0].b64_json
