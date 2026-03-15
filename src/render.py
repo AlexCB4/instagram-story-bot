@@ -24,6 +24,7 @@ _PAD_Y = 6       # vertical padding inside highlight pill
 _LINE_GAP = 7    # gap between consecutive highlighted lines
 _BLOCK_GAP = 52  # gap between title block and subtitle block
 _RADIUS = 12     # corner radius of highlight pill
+_OUTER_MARGIN_X = 64  # minimum space between highlight pill and image edge
 
 
 def _fit_background(image: Image.Image) -> Image.Image:
@@ -54,6 +55,7 @@ def _layout_lines(
     font,
     start_y: int,
     highlight_color: tuple,
+    uniform_rect_width: int | None = None,
 ) -> tuple[list[tuple], list[tuple], int]:
     """Return (highlight_rects, text_items, end_y).
 
@@ -73,14 +75,27 @@ def _layout_lines(
         text_w = math.ceil(draw.textlength(clean_line, font=font))
         bbox = draw.textbbox((0, 0), clean_line, font=font)
         text_h = bbox[3] - bbox[1]
-        rect_w = text_w + _PAD_X * 2
+        rect_w = uniform_rect_width if uniform_rect_width is not None else text_w + _PAD_X * 2
         rect_h = text_h + _PAD_Y * 2
         rx = (STORY_WIDTH - rect_w) // 2
         rects.append((rx, y, rx + rect_w, y + rect_h, highlight_color))
-        texts.append((rx + _PAD_X - bbox[0], y + _PAD_Y - bbox[1], clean_line, font))
+        text_x = rx + (rect_w - text_w) // 2 - bbox[0]
+        texts.append((text_x, y + _PAD_Y - bbox[1], clean_line, font))
         y += rect_h + _LINE_GAP
     end_y = y - _LINE_GAP if lines else start_y
     return rects, texts, end_y
+
+
+def _compute_uniform_rect_width(draw: ImageDraw.ImageDraw, line_specs: list[tuple[str, any]]) -> int:
+    max_text_w = 0
+    for line, font in line_specs:
+        clean_line = " ".join(line.split())
+        if not clean_line:
+            continue
+        max_text_w = max(max_text_w, math.ceil(draw.textlength(clean_line, font=font)))
+    target_w = max_text_w + _PAD_X * 2
+    max_allowed = STORY_WIDTH - (_OUTER_MARGIN_X * 2)
+    return min(target_w, max_allowed)
 
 
 def _render_text_block(
@@ -91,17 +106,20 @@ def _render_text_block(
     subtitle_font,
     start_y: int,
     highlight_color: tuple,
+    uniform_rect_width: int,
 ) -> tuple[list[tuple], list[tuple]]:
     rects: list[tuple] = []
     texts: list[tuple] = []
 
-    t_rects, t_texts, title_end_y = _layout_lines(draw, title_lines, title_font, start_y, highlight_color)
+    t_rects, t_texts, title_end_y = _layout_lines(
+        draw, title_lines, title_font, start_y, highlight_color, uniform_rect_width
+    )
     rects.extend(t_rects)
     texts.extend(t_texts)
 
     if subtitle_lines:
         s_rects, s_texts, _ = _layout_lines(
-            draw, subtitle_lines, subtitle_font, title_end_y + _BLOCK_GAP, highlight_color
+            draw, subtitle_lines, subtitle_font, title_end_y + _BLOCK_GAP, highlight_color, uniform_rect_width
         )
         rects.extend(s_rects)
         texts.extend(s_texts)
@@ -135,17 +153,30 @@ def create_story(
     all_rects: list[tuple] = []
     all_texts: list[tuple] = []
 
+    line_specs: list[tuple[str, any]] = [(line, title_font) for line in title_lines]
+    line_specs.extend((line, subtitle_font) for line in subtitle_lines)
+    if brand_text.strip():
+        line_specs.append((brand_text.strip(), brand_font))
+    uniform_rect_width = _compute_uniform_rect_width(scratch, line_specs)
+
     if text_position not in {"top", "bottom"}:
         raise ValueError(f"Unsupported text_position: {text_position}")
 
     if text_position == "top":
         block_rects, block_texts = _render_text_block(
-            scratch, title_lines, subtitle_lines, title_font, subtitle_font, 110, highlight_color
+            scratch, title_lines, subtitle_lines, title_font, subtitle_font, 110, highlight_color, uniform_rect_width
         )
         brand_y = STORY_HEIGHT - 110
     else:
         block_rects, block_texts = _render_text_block(
-            scratch, title_lines, subtitle_lines, title_font, subtitle_font, int(STORY_HEIGHT * 0.67), highlight_color
+            scratch,
+            title_lines,
+            subtitle_lines,
+            title_font,
+            subtitle_font,
+            int(STORY_HEIGHT * 0.67),
+            highlight_color,
+            uniform_rect_width,
         )
         brand_y = 70
 
@@ -153,7 +184,14 @@ def create_story(
     all_texts.extend(block_texts)
 
     if brand_text.strip():
-        b_rects, b_texts, _ = _layout_lines(scratch, [brand_text.strip()], brand_font, brand_y, highlight_color)
+        b_rects, b_texts, _ = _layout_lines(
+            scratch,
+            [brand_text.strip()],
+            brand_font,
+            brand_y,
+            highlight_color,
+            uniform_rect_width,
+        )
         all_rects.extend(b_rects)
         all_texts.extend(b_texts)
 
