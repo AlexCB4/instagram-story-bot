@@ -18,6 +18,9 @@ _SERIF_CANDIDATES = [
     Path("/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf"),
     FONTS_DIR / "LiberationSerif-Bold.ttf",
     FONTS_DIR / "Roboto-Bold.ttf",  # fallback if neither serif variant exists
+    Path("C:/Windows/Fonts/timesbd.ttf"),
+    Path("C:/Windows/Fonts/times.ttf"),
+    Path("C:/Windows/Fonts/arialbd.ttf"),
 ]
 DEFAULT_FONT_PATH: Path = next(
     (p for p in _SERIF_CANDIDATES if p.exists()),

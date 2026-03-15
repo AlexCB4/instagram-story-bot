@@ -1,5 +1,5 @@
 monday:
-  topic: "Recarga de energía para la semana"
+  topic: "Inspiración floral del lunes"
   source: "openai"
   ai_prompt: "Ultra-detailed macro photograph of a single stunning flower in full bloom, soft natural light, luminous airy mood, blush and cream pastel background, dreamy bokeh, vertical 9:16 composition, negative space at top for text overlay, editorial quality"
   prompt_style: "motivational"
@@ -43,6 +43,6 @@ saturday:
 sunday:
   topic: "Recarga de energía para la semana. Domingo feliz. Disfruta el domingo."
   source: "openai"
-  ai_prompt: "Peaceful Sunday morning scene with flowers on a table, soft morning light, pastel cream and blush tones, airy cozy atmosphere, vertical 9:16 composition, soft bokeh, negative space at top for text"
+  ai_prompt: "Peaceful Sunday morning scene with flowers, soft morning light, pastel cream and blush tones, cozy atmosphere, vertical 9:16 composition, negative space at top for text"
   prompt_style: "warm"
   cta: "Feliz domingo! Recarga energia para la semana"
