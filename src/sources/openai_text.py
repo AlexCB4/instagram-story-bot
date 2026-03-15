@@ -14,11 +14,11 @@ def generate_caption(api_key: str, topic: str, style: str, cta: str, max_length:
 Topic: {topic}
 Style: {style}
 Call to action: {cta}
-Max length: 30 words total
+Max length: 20 words total
 
 Requirements:
 - casual, natural Spanish
-- maximum 30 words, strictly enforced
+- maximum 20 words, strictly enforced
 - 1 emoji maximum
 - concise enough to display as large text on an Instagram story image
 - use single spaces only between words and after punctuation
