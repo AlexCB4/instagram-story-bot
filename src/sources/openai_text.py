@@ -16,11 +16,13 @@ CAPTION_VARIATION_HINTS = [
 
 
 def _normalize_caption_whitespace(text: str) -> str:
+    text = text.replace("\u00A0", " ")
+    text = re.sub(r"[\u200B-\u200D\uFEFF]", "", text)
     text = re.sub(r"\s+", " ", text).strip()
     text = re.sub(r"\s+([,.;:!?])", r"\1", text)
     text = re.sub(r"([¿¡])\s+", r"\1", text)
     text = re.sub(r"([,.;:!?])(\S)", r"\1 \2", text)
-    return text
+    return text.rstrip()
 
 
 def generate_caption(api_key: str, topic: str, style: str, cta: str, variation_hint: str | None = None) -> str:
@@ -38,6 +40,7 @@ Requirements:
 - maximum 20 words, strictly enforced
 - 1 emoji maximum
 - use single spaces only between words and after punctuation
+- no trailing spaces at the end of the sentence
 - avoid repeating generic opening lines and repeated wording
 - return only the caption text, no hashtags
 """
