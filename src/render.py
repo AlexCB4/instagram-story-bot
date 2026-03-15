@@ -18,7 +18,7 @@ _HIGHLIGHT_COLORS = [
     (100, 220, 140, 210),
 ]
 
-_PAD_X = 12      # horizontal padding inside highlight pill
+_PAD_X = 8       # horizontal padding inside highlight pill
 _PAD_Y = 6       # vertical padding inside highlight pill
 _LINE_GAP = 7    # gap between consecutive highlighted lines
 _BLOCK_GAP = 52  # gap between title block and subtitle block
@@ -79,6 +79,32 @@ def _layout_lines(
     return rects, texts, end_y
 
 
+def _render_text_block(
+    draw: ImageDraw.ImageDraw,
+    title_lines: list[str],
+    subtitle_lines: list[str],
+    title_font,
+    subtitle_font,
+    start_y: int,
+    highlight_color: tuple,
+) -> tuple[list[tuple], list[tuple]]:
+    rects: list[tuple] = []
+    texts: list[tuple] = []
+
+    t_rects, t_texts, title_end_y = _layout_lines(draw, title_lines, title_font, start_y, highlight_color)
+    rects.extend(t_rects)
+    texts.extend(t_texts)
+
+    if subtitle_lines:
+        s_rects, s_texts, _ = _layout_lines(
+            draw, subtitle_lines, subtitle_font, title_end_y + _BLOCK_GAP, highlight_color
+        )
+        rects.extend(s_rects)
+        texts.extend(s_texts)
+
+    return rects, texts
+
+
 def create_story(
     background_path: str | Path,
     output_path: str | Path,
@@ -86,6 +112,7 @@ def create_story(
     subtitle_text: str,
     brand_text: str,
     font_path: str | Path,
+    text_position: str = "top",
 ) -> Path:
     highlight_color = random.choice(_HIGHLIGHT_COLORS)
 
@@ -95,8 +122,8 @@ def create_story(
     subtitle_font = _load_font(font_path, 50)
     brand_font = _load_font(font_path, 30)
 
-    title_lines = textwrap.wrap(" ".join(title_text.split()), width=20)
-    subtitle_lines = textwrap.wrap(" ".join(subtitle_text.split()), width=30) if subtitle_text.strip() else []
+    title_lines = textwrap.wrap(" ".join(title_text.split()), width=28)
+    subtitle_lines = textwrap.wrap(" ".join(subtitle_text.split()), width=42) if subtitle_text.strip() else []
 
     # Measure using a scratch draw (1×1 px) so positioning is independent of compositing order
     scratch = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
@@ -104,24 +131,25 @@ def create_story(
     all_rects: list[tuple] = []
     all_texts: list[tuple] = []
 
-    # Top third: title (must stay above y=640)
-    t_rects, t_texts, _ = _layout_lines(scratch, title_lines, title_font, 140, highlight_color)
-    all_rects.extend(t_rects)
-    all_texts.extend(t_texts)
+    if text_position not in {"top", "bottom"}:
+        raise ValueError(f"Unsupported text_position: {text_position}")
 
-    # Bottom third: subtitle starts at 67 % mark (y≈1280), keeping centre clear
-    if subtitle_lines:
-        subtitle_start_y = int(STORY_HEIGHT * 0.67)
-        s_rects, s_texts, _ = _layout_lines(
-            scratch, subtitle_lines, subtitle_font, subtitle_start_y, highlight_color
+    if text_position == "top":
+        block_rects, block_texts = _render_text_block(
+            scratch, title_lines, subtitle_lines, title_font, subtitle_font, 110, highlight_color
         )
-        all_rects.extend(s_rects)
-        all_texts.extend(s_texts)
+        brand_y = STORY_HEIGHT - 110
+    else:
+        block_rects, block_texts = _render_text_block(
+            scratch, title_lines, subtitle_lines, title_font, subtitle_font, int(STORY_HEIGHT * 0.67), highlight_color
+        )
+        brand_y = 70
+
+    all_rects.extend(block_rects)
+    all_texts.extend(block_texts)
 
     if brand_text.strip():
-        b_rects, b_texts, _ = _layout_lines(
-            scratch, [brand_text.strip()], brand_font, STORY_HEIGHT - 110, highlight_color
-        )
+        b_rects, b_texts, _ = _layout_lines(scratch, [brand_text.strip()], brand_font, brand_y, highlight_color)
         all_rects.extend(b_rects)
         all_texts.extend(b_texts)
 
