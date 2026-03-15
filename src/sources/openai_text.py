@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import re
+
 from openai import OpenAI
 
 
 def _normalize_caption_whitespace(text: str) -> str:
-    return " ".join(text.split())
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\s+([,.;:!?])", r"\1", text)
+    text = re.sub(r"([¿¡])\s+", r"\1", text)
+    text = re.sub(r"([,.;:!?])(\S)", r"\1 \2", text)
+    return text
 
 
 def generate_caption(api_key: str, topic: str, style: str, cta: str, max_length: int = 180) -> str:
