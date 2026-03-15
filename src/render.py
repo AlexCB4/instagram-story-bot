@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 import textwrap
+import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -63,17 +64,20 @@ def _layout_lines(
     texts: list[tuple] = []
     y = start_y
     for line in lines:
-        if not line.strip():
+        clean_line = " ".join(line.split())
+        if not clean_line:
             y += font.size // 2
             continue
-        bbox = draw.textbbox((0, 0), line, font=font)
-        text_w = bbox[2] - bbox[0]
+
+        # textlength gives tighter horizontal advance than textbbox for lines ending in punctuation.
+        text_w = math.ceil(draw.textlength(clean_line, font=font))
+        bbox = draw.textbbox((0, 0), clean_line, font=font)
         text_h = bbox[3] - bbox[1]
         rect_w = text_w + _PAD_X * 2
         rect_h = text_h + _PAD_Y * 2
         rx = (STORY_WIDTH - rect_w) // 2
         rects.append((rx, y, rx + rect_w, y + rect_h, highlight_color))
-        texts.append((rx + _PAD_X - bbox[0], y + _PAD_Y - bbox[1], line, font))
+        texts.append((rx + _PAD_X - bbox[0], y + _PAD_Y - bbox[1], clean_line, font))
         y += rect_h + _LINE_GAP
     end_y = y - _LINE_GAP if lines else start_y
     return rects, texts, end_y

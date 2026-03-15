@@ -13,20 +13,18 @@ def _normalize_caption_whitespace(text: str) -> str:
     return text
 
 
-def generate_caption(api_key: str, topic: str, style: str, cta: str, max_length: int = 180) -> str:
+def generate_caption(api_key: str, topic: str, style: str, cta: str) -> str:
     client = OpenAI(api_key=api_key)
     prompt = f"""Create a short Instagram story caption in Spanish.
 
 Topic: {topic}
 Style: {style}
 Call to action: {cta}
-Max length: 20 words total
 
 Requirements:
 - casual, natural Spanish
 - maximum 20 words, strictly enforced
 - 1 emoji maximum
-- concise enough to display as large text on an Instagram story image
 - use single spaces only between words and after punctuation
 - return only the caption text, no hashtags
 """

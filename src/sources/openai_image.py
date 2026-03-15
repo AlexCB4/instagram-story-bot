@@ -7,9 +7,9 @@ from openai import OpenAI
 
 
 PASTEL_STYLE_SUFFIX = (
-    " Use a light, airy, elegant visual style with a soft pastel color palette."
-    " Favor cream, blush pink, peach, sage, sky blue, and warm off-white tones."
-    " Avoid dark, saturated, neon, harsh, or heavy contrast colors."
+    " Use an elegant, airy pastel palette."
+    " Favor cream, blush, peach, sage, sky blue, and white tones."
+    " Avoid dark, saturated, neon, or harsh contrast colors."
 )
 
 

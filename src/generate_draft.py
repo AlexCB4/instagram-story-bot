@@ -56,11 +56,6 @@ def build_telegram_caption(date_str: str, topic: str, full_caption: str) -> str:
     )
 
 
-def build_variant_caption(label: str, extra_text: str = "") -> str:
-    caption = f"Option: {label}"
-    return caption if not extra_text else f"{caption}\n\n{extra_text}"
-
-
 def main() -> None:
     openai_key = require_env("OPENAI_API_KEY")
     telegram_bot_token = require_env("TELEGRAM_BOT_TOKEN")

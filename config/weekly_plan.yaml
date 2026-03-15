@@ -1,5 +1,5 @@
 monday:
-  topic: "Inspiración floral del lunes"
+  topic: "Recarga de energía para la semana"
   source: "openai"
   ai_prompt: "Ultra-detailed macro photograph of a single stunning flower in full bloom, soft natural light, luminous airy mood, blush and cream pastel background, dreamy bokeh, vertical 9:16 composition, negative space at top for text overlay, editorial quality"
   prompt_style: "motivational"
@@ -41,7 +41,7 @@ saturday:
   cta: "Haz tu pedido hoy"
 
 sunday:
-  topic: "Reflexion dominical"
+  topic: "Recarga de energía para la semana. Domingo feliz. Disfruta el domingo."
   source: "openai"
   ai_prompt: "Peaceful Sunday morning scene with flowers on a table, soft morning light, pastel cream and blush tones, airy cozy atmosphere, vertical 9:16 composition, soft bokeh, negative space at top for text"
   prompt_style: "warm"
