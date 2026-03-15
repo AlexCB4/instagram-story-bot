@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +48,48 @@ def send_photo(bot_token: str, chat_id: str, photo_path: str | Path, caption: st
     payload = response.json()
     if not payload.get("ok"):
         raise RuntimeError(f"Telegram sendPhoto failed: {payload}")
+    return payload["result"]
+
+
+def send_media_group(
+    bot_token: str,
+    chat_id: str,
+    photo_paths: list[str | Path],
+    caption: str = "",
+) -> list[dict[str, Any]]:
+    if len(photo_paths) < 2:
+        raise ValueError("Telegram media groups require at least two photos")
+
+    media: list[dict[str, Any]] = []
+    files: dict[str, Any] = {}
+    handles = []
+
+    try:
+        for index, photo_path in enumerate(photo_paths):
+            attachment_name = f"photo_{index}"
+            path = Path(photo_path)
+            handle = path.open("rb")
+            handles.append(handle)
+            files[attachment_name] = handle
+            item = {"type": "photo", "media": f"attach://{attachment_name}"}
+            if index == 0 and caption:
+                item["caption"] = caption
+            media.append(item)
+
+        response = requests.post(
+            f"{BASE_URL}/bot{bot_token}/sendMediaGroup",
+            data={"chat_id": chat_id, "media": json.dumps(media, ensure_ascii=False)},
+            files=files,
+            timeout=90,
+        )
+    finally:
+        for handle in handles:
+            handle.close()
+
+    response.raise_for_status()
+    payload = response.json()
+    if not payload.get("ok"):
+        raise RuntimeError(f"Telegram sendMediaGroup failed: {payload}")
     return payload["result"]
 
 

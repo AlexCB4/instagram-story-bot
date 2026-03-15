@@ -11,7 +11,7 @@ from src.gsheet import SheetManager
 from src.render import create_story
 from src.settings import DEFAULT_FONT_PATH, OUTPUT_DIR, OWNED_ASSETS_DIR, WEEKLY_PLAN_PATH, require_env
 from src.sources import openai_image, openai_text, pexels
-from src.telegram_api import extract_photo_file_id, send_photo
+from src.telegram_api import extract_photo_file_id, send_media_group
 
 BRAND_HANDLE = "@parterre_c"
 
@@ -54,6 +54,11 @@ def build_telegram_caption(date_str: str, topic: str, full_caption: str) -> str:
         f"Reject: /reject {date_str}\n"
         f"Regenerate: /regen {date_str}"
     )
+
+
+def build_variant_caption(label: str, extra_text: str = "") -> str:
+    caption = f"Option: {label}"
+    return caption if not extra_text else f"{caption}\n\n{extra_text}"
 
 
 def main() -> None:
@@ -105,22 +110,38 @@ def main() -> None:
     full_caption = caption if not hashtags else f"{caption}\n\n{hashtags}"
     title_text, subtitle_text = caption_parts(caption)
 
-    story_path = OUTPUT_DIR / f"story_{today}.png"
+    story_top_path = OUTPUT_DIR / f"story_{today}_top.png"
+    story_bottom_path = OUTPUT_DIR / f"story_{today}_bottom.png"
     create_story(
         background_path=background_path,
-        output_path=story_path,
+        output_path=story_top_path,
         title_text=title_text,
         subtitle_text=subtitle_text,
         brand_text=BRAND_HANDLE,
         font_path=DEFAULT_FONT_PATH,
+        text_position="top",
+    )
+    create_story(
+        background_path=background_path,
+        output_path=story_bottom_path,
+        title_text=title_text,
+        subtitle_text=subtitle_text,
+        brand_text=BRAND_HANDLE,
+        font_path=DEFAULT_FONT_PATH,
+        text_position="bottom",
     )
 
-    telegram_message = send_photo(
+    telegram_messages = send_media_group(
         bot_token=telegram_bot_token,
         chat_id=telegram_chat_id,
-        photo_path=story_path,
-        caption=build_telegram_caption(today, plan["topic"], full_caption),
+        photo_paths=[story_top_path, story_bottom_path],
+        caption=(
+            "Option 1: text at top\n"
+            "Option 2: text at bottom\n\n"
+            + build_telegram_caption(today, plan["topic"], full_caption)
+        ),
     )
+    telegram_message = telegram_messages[-1]
 
     row = {
         "date": today,
@@ -135,7 +156,7 @@ def main() -> None:
         "notes": "",
     }
     sheet.upsert_story_row(row)
-    print(f"Generated draft for {today}: {story_path}")
+    print(f"Generated draft variants for {today}: {story_top_path} and {story_bottom_path}")
 
 
 if __name__ == "__main__":
