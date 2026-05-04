@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-import random
 from datetime import datetime, timezone
-from pathlib import Path
-
-import shutil
+import random
 import yaml
 
 from src.gsheet import SheetManager
-from src.render import create_story
-from src.settings import DEFAULT_FONT_PATH, OUTPUT_DIR, OWNED_ASSETS_DIR, WEEKLY_PLAN_PATH, require_env
-from src.sources import openai_image, openai_text, pexels
-from src.telegram_api import extract_photo_file_id, send_media_group
+from src.randomization import build_seed, caption_fingerprint, is_caption_too_similar, pick_value
+from src.settings import WEEKLY_PLAN_PATH, require_env
+from src.sources import openai_text
+from src.telegram_api import send_message
 
-BRAND_HANDLE = "@parterre_c"
+
+def _today_utc() -> tuple[str, str]:
+    now = datetime.now(timezone.utc)
+    return now.strftime("%Y-%m-%d"), now.strftime("%A")
 
 
 def load_plan() -> dict:
@@ -21,48 +21,13 @@ def load_plan() -> dict:
         return yaml.safe_load(handle) or {}
 
 
-def get_today_keys() -> tuple[str, str]:
-    now = datetime.now(timezone.utc)
-    return now.strftime("%Y-%m-%d"), now.strftime("%A")
-
-
-def pick_owned_image(folder_value: str | None) -> tuple[Path, str]:
-    folder = Path(folder_value) if folder_value else OWNED_ASSETS_DIR
-    if not folder.is_absolute():
-        folder = OWNED_ASSETS_DIR.parent.parent / folder
-    images = [item for item in folder.iterdir() if item.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}]
-    if not images:
-        raise RuntimeError(f"No owned images found in {folder}")
-    return random.choice(images), "Own photo"
-
-
-def caption_parts(caption: str) -> tuple[str, str]:
-    normalized = [line.strip() for line in caption.splitlines() if line.strip()]
-    if not normalized:
-        return "Story", ""
-    if len(normalized) == 1:
-        return normalized[0], ""
-    return normalized[0], " ".join(normalized[1:])
-
-
-def _pick_value(value, default: str = "") -> str:
-    if isinstance(value, list):
-        options = [str(item).strip() for item in value if str(item).strip()]
-        return random.choice(options) if options else default
-    if value is None:
-        return default
-    text = str(value).strip()
-    return text if text else default
-
-
-def build_telegram_caption(date_str: str, topic: str, full_caption: str) -> str:
+def build_caption_review_message(date_str: str, topic: str, full_caption: str) -> str:
     return (
-        f"Draft for {date_str}\n"
+        f"Caption for {date_str}\n"
         f"Topic: {topic}\n\n"
         f"{full_caption}\n\n"
-        f"Approve: /approve {date_str}\n"
-        f"Reject: /reject {date_str}\n"
-        f"Regenerate: /regen {date_str}"
+        f"Approve caption: /approve_caption {date_str}\n"
+        f"Modify caption: /caption {date_str} <your new text>"
     )
 
 
@@ -74,7 +39,7 @@ def main() -> None:
     google_sheet_id = require_env("GOOGLE_SHEET_ID")
     sheet = SheetManager(google_credentials, google_sheet_id)
 
-    today, weekday = get_today_keys()
+    today, weekday = _today_utc()
     weekday_key = weekday.lower()
 
     existing = sheet.get_row_by_date(today)
@@ -82,42 +47,28 @@ def main() -> None:
         print(f"Story for {today} already exists with status {existing.get('status')}. Skipping.")
         return
 
+    generation_attempt = 1
+    if existing and existing.get("status") == "regenerate":
+        generation_attempt = int(existing.get("generation_attempt") or "1") + 1
+
+    rng = random.Random(build_seed(today, generation_attempt))
+
     plan = load_plan().get(weekday_key)
     if not plan:
         raise RuntimeError(f"No plan configured for {weekday_key}")
 
     source_type = plan["source"]
-    topic_text = _pick_value(plan.get("topic"), "Story")
-    style_text = _pick_value(plan.get("prompt_style"), "friendly")
-    cta_text = _pick_value(plan.get("cta"), "")
-    caption_variation = _pick_value(
+    topic_text = pick_value(plan.get("topic"), "Story", rng)
+    style_text = pick_value(plan.get("caption_tones"), pick_value(plan.get("prompt_style"), "friendly", rng), rng)
+    cta_text = pick_value(plan.get("cta_variations"), pick_value(plan.get("cta"), "", rng), rng)
+    caption_hook = pick_value(plan.get("caption_hooks"), "", rng)
+    caption_variation = pick_value(
         plan.get("caption_variations"),
         "Use fresh wording and a slightly different angle from previous posts.",
+        rng,
     )
-    background_path = OUTPUT_DIR / f"background_{today}.png"
-    attribution = ""
-
-    if source_type == "pexels":
-        pexels_key = require_env("PEXELS_API_KEY")
-        result = pexels.search_image(pexels_key, _pick_value(plan.get("search_query"), "flowers"))
-        pexels.download_image(result["url"], background_path)
-        attribution = result["attribution"]
-    elif source_type == "openai":
-        ai_prompt = _pick_value(plan.get("ai_prompt"))
-        if not ai_prompt:
-            raise RuntimeError("Missing ai_prompt for openai source")
-        image_variation = _pick_value(
-            plan.get("image_variations"),
-            "Use a composition and framing different from recent posts.",
-        )
-        image_base64 = openai_image.generate_image(openai_key, ai_prompt, variation_hint=image_variation)
-        openai_image.save_base64_image(image_base64, background_path)
-        attribution = "Generated with OpenAI"
-    elif source_type == "owned":
-        owned_image, attribution = pick_owned_image(plan.get("folder"))
-        shutil.copy2(owned_image, background_path)
-    else:
-        raise RuntimeError(f"Unsupported source type: {source_type}")
+    if caption_hook:
+        caption_variation = f"{caption_variation} Preferred opening style: {caption_hook}."
 
     caption = openai_text.generate_caption(
         api_key=openai_key,
@@ -126,57 +77,48 @@ def main() -> None:
         cta=cta_text,
         variation_hint=caption_variation,
     )
+
+    recent_rows = sheet.get_recent_rows(days=21, exclude_date=today)
+    recent_captions = [row.get("caption", "") for row in recent_rows]
+    if is_caption_too_similar(caption, recent_captions):
+        caption = openai_text.generate_caption(
+            api_key=openai_key,
+            topic=topic_text,
+            style=style_text,
+            cta=cta_text,
+            variation_hint=(
+                f"{caption_variation} Use clearly different wording and opening compared with recent captions."
+            ),
+        )
+
     hashtags = " ".join(plan.get("hashtags", []))
     full_caption = caption if not hashtags else f"{caption}\n\n{hashtags}"
-    title_text, subtitle_text = caption_parts(caption)
 
-    story_top_path = OUTPUT_DIR / f"story_{today}_top.png"
-    story_bottom_path = OUTPUT_DIR / f"story_{today}_bottom.png"
-    create_story(
-        background_path=background_path,
-        output_path=story_top_path,
-        title_text=title_text,
-        subtitle_text=subtitle_text,
-        brand_text=BRAND_HANDLE,
-        font_path=DEFAULT_FONT_PATH,
-        text_position="top",
-    )
-    create_story(
-        background_path=background_path,
-        output_path=story_bottom_path,
-        title_text=title_text,
-        subtitle_text=subtitle_text,
-        brand_text=BRAND_HANDLE,
-        font_path=DEFAULT_FONT_PATH,
-        text_position="bottom",
-    )
-
-    telegram_messages = send_media_group(
+    telegram_message = send_message(
         bot_token=telegram_bot_token,
         chat_id=telegram_chat_id,
-        photo_paths=[story_top_path, story_bottom_path],
-        caption=(
-            "Option 1: text at top\n"
-            "Option 2: text at bottom\n\n"
-            + build_telegram_caption(today, topic_text, full_caption)
-        ),
+        text=build_caption_review_message(today, topic_text, full_caption),
     )
-    telegram_message = telegram_messages[-1]
 
     row = {
         "date": today,
         "weekday": weekday,
         "topic": topic_text,
         "source_type": source_type,
-        "status": "pending_approval",
+        "status": "pending_caption_approval",
         "caption": full_caption,
-        "telegram_message_id": telegram_message.get("message_id", ""),
-        "telegram_file_id": extract_photo_file_id(telegram_message),
-        "attribution": attribution,
+        "telegram_message_id": "",
+        "telegram_file_id": "",
+        "caption_message_id": telegram_message.get("message_id", ""),
+        "attribution": "",
         "notes": "",
+        "generation_attempt": str(generation_attempt),
+        "reference_image_name": "",
+        "caption_fingerprint": caption_fingerprint(caption),
+        "image_fingerprint": "",
     }
     sheet.upsert_story_row(row)
-    print(f"Generated draft variants for {today}: {story_top_path} and {story_bottom_path}")
+    print(f"Generated caption for {today}; waiting for Telegram caption approval.")
 
 
 if __name__ == "__main__":

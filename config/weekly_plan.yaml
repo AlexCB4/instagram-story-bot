@@ -1,7 +1,27 @@
 monday:
   topic: "Inspiración floral del lunes"
-  source: "openai"
+  source: "nanobanana"
   ai_prompt: "Ultra-detailed macro photograph of a single stunning flower in full bloom, soft natural light, luminous airy mood, blush and cream pastel background, dreamy bokeh, vertical 9:16 composition, negative space at top for text overlay, editorial quality"
+  caption_hooks:
+    - "Pregunta inspiracional"
+    - "Frase corta positiva"
+    - "Tip rapido de bienestar"
+  caption_tones:
+    - "motivational"
+    - "warm"
+    - "elegant"
+  cta_variations:
+    - "Feliz semana! Una nueva semana llena de flores te espera"
+    - "Comienza la semana con energia bonita"
+    - "Cual es tu flor favorita para arrancar el lunes?"
+  image_moods:
+    - "airy editorial"
+    - "dreamy macro"
+    - "soft natural"
+  image_compositions:
+    - "close-up with negative space"
+    - "off-center hero flower"
+    - "gentle side angle"
   prompt_style: "motivational"
   cta: "Feliz semana! Una nueva semana llena de flores te espera"
 
@@ -21,8 +41,28 @@ wednesday:
 
 thursday:
   topic: "Tendencias de moda floral"
-  source: "openai"
+  source: "nanobanana"
   ai_prompt: "Modern fashion outfit with floral elements, minimalist editorial style, light pastel palette, blush peach sage and sky-blue accents, soft studio lighting, airy bright atmosphere, vertical 9:16 composition, negative space at top for title text"
+  caption_hooks:
+    - "Pregunta de estilo"
+    - "Mini consejo fashion"
+    - "Trend alert"
+  caption_tones:
+    - "trendy"
+    - "playful"
+    - "stylish"
+  cta_variations:
+    - "Te gustaria este look?"
+    - "Con cual accesorio lo combinarias?"
+    - "Lo usarias para una ocasion especial?"
+  image_moods:
+    - "clean minimal"
+    - "runway inspired"
+    - "soft studio"
+  image_compositions:
+    - "full outfit centered"
+    - "detail shot with texture"
+    - "street-style angle"
   prompt_style: "trendy"
   cta: "Te gustaria este look?"
 
@@ -42,7 +82,27 @@ saturday:
 
 sunday:
   topic: "Recarga de energía para la semana. Domingo feliz. Disfruta el domingo."
-  source: "openai"
+  source: "nanobanana"
   ai_prompt: "Peaceful Sunday morning scene with flowers, soft morning light, pastel cream and blush tones, cozy atmosphere, vertical 9:16 composition, negative space at top for text"
+  caption_hooks:
+    - "Invitacion a pausar"
+    - "Mensaje de calma"
+    - "Reflexion suave"
+  caption_tones:
+    - "warm"
+    - "calm"
+    - "gentle"
+  cta_variations:
+    - "Feliz domingo! Recarga energia para la semana"
+    - "Date un momento para ti hoy"
+    - "Como recargas energia este domingo?"
+  image_moods:
+    - "cozy morning"
+    - "serene pastel"
+    - "soft sunlight"
+  image_compositions:
+    - "window light close-up"
+    - "minimal still life"
+    - "wide calm scene"
   prompt_style: "warm"
   cta: "Feliz domingo! Recarga energia para la semana"

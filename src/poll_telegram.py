@@ -1,25 +1,64 @@
 from __future__ import annotations
 
 import os
+import re
 
 from src.gsheet import SheetManager
 from src.settings import require_env
 from src.state_store import StateStore
 from src.telegram_api import get_updates, send_message
 
-ALLOWED_COMMANDS = {"approve", "reject", "regen"}
+DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+ALLOWED_COMMANDS = {"approve", "reject", "regen", "approve_caption", "caption"}
 
 
-def process_command(command: str, date_str: str, sheet: SheetManager) -> str:
+def process_command(command: str, arg_text: str, sheet: SheetManager) -> str:
+    arg_text = arg_text.strip()
+
+    if command == "caption":
+        parts = arg_text.split(maxsplit=1)
+        if len(parts) != 2:
+            return "Usage: /caption YYYY-MM-DD your new caption"
+        date_str, new_caption = parts[0], parts[1].strip()
+        if not DATE_PATTERN.match(date_str):
+            return "Invalid date format. Use YYYY-MM-DD."
+        if not new_caption:
+            return "Caption cannot be empty."
+        updated = sheet.update_story_fields(
+            date_str,
+            {
+                "caption": new_caption,
+                "status": "caption_approved",
+            },
+        )
+        return f"Caption updated and approved for {date_str}." if updated else f"No row found for {date_str}."
+
+    date_str = arg_text
+    if not DATE_PATTERN.match(date_str):
+        return "Invalid date format. Use YYYY-MM-DD."
+
     if command == "approve":
         updated = sheet.update_story_status(date_str, "approved")
         return f"Approved {date_str}." if updated else f"No row found for {date_str}."
+    if command == "approve_caption":
+        updated = sheet.update_story_status(date_str, "caption_approved")
+        return f"Caption approved for {date_str}." if updated else f"No row found for {date_str}."
     if command == "reject":
         updated = sheet.update_story_status(date_str, "rejected")
         return f"Rejected {date_str}." if updated else f"No row found for {date_str}."
     if command == "regen":
-        updated = sheet.update_story_status(date_str, "regenerate")
-        return f"Marked {date_str} for regeneration." if updated else f"No row found for {date_str}."
+        row = sheet.get_row_by_date(date_str)
+        if row is None:
+            return f"No row found for {date_str}."
+        current_attempt = int(row.get("generation_attempt") or "1")
+        updated = sheet.update_story_fields(
+            date_str,
+            {
+                "status": "caption_approved",
+                "generation_attempt": str(current_attempt + 1),
+            },
+        )
+        return f"Image regeneration queued for {date_str}." if updated else f"No row found for {date_str}."
     return "Unsupported command."
 
 
@@ -35,7 +74,6 @@ def main() -> None:
     updates = get_updates(bot_token, offset=last_update_id + 1)
 
     max_update_id = last_update_id
-    regen_requested = False
     for update in updates:
         update_id = int(update.get("update_id", 0))
         max_update_id = max(max_update_id, update_id)
@@ -54,8 +92,6 @@ def main() -> None:
             continue
 
         response = process_command(command, parts[1].strip(), sheet)
-        if command == "regen" and response.startswith("Marked"):
-            regen_requested = True
         send_message(bot_token, chat_id, response)
 
     if max_update_id > last_update_id:
@@ -67,7 +103,7 @@ def main() -> None:
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a", encoding="utf-8") as handle:
-            handle.write(f"regen_requested={'true' if regen_requested else 'false'}\n")
+            handle.write("regen_requested=false\n")
 
 
 if __name__ == "__main__":

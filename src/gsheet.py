@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta
 from typing import Any
 
 import gspread
@@ -20,8 +21,13 @@ MAIN_HEADERS = [
     "caption",
     "telegram_message_id",
     "telegram_file_id",
+    "caption_message_id",
     "attribution",
     "notes",
+    "generation_attempt",
+    "reference_image_name",
+    "caption_fingerprint",
+    "image_fingerprint",
 ]
 
 STATE_HEADERS = ["key", "value"]
@@ -49,6 +55,22 @@ class SheetManager:
         if existing != headers:
             worksheet.update("A1", [headers])
 
+    @staticmethod
+    def _column_letter(column_number: int) -> str:
+        result = ""
+        n = column_number
+        while n > 0:
+            n, remainder = divmod(n - 1, 26)
+            result = chr(65 + remainder) + result
+        return result
+
+    @staticmethod
+    def _date_from_row(value: str) -> datetime | None:
+        try:
+            return datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            return None
+
     def get_row_by_date(self, date_str: str) -> dict[str, str] | None:
         records = self.main_sheet.get_all_records(expected_headers=MAIN_HEADERS)
         for index, record in enumerate(records, start=2):
@@ -63,23 +85,60 @@ class SheetManager:
             self.main_sheet.append_row(ordered_row, value_input_option="USER_ENTERED")
             return
         row_number = int(existing["row_number"])
-        cell_range = f"A{row_number}:J{row_number}"
+        last_col = self._column_letter(len(MAIN_HEADERS))
+        cell_range = f"A{row_number}:{last_col}{row_number}"
         self.main_sheet.update(cell_range, [ordered_row], value_input_option="USER_ENTERED")
 
     def update_story_status(self, date_str: str, status: str, notes: str = "") -> bool:
+        updates: dict[str, Any] = {"status": status}
+        if notes:
+            updates["notes"] = notes
+        return self.update_story_fields(date_str, updates)
+
+    def update_story_fields(self, date_str: str, updates: dict[str, Any]) -> bool:
         existing = self.get_row_by_date(date_str)
         if existing is None:
             return False
         row_number = int(existing["row_number"])
-        self.main_sheet.update(f"E{row_number}:J{row_number}", [[
-            status,
-            existing.get("caption", ""),
-            existing.get("telegram_message_id", ""),
-            existing.get("telegram_file_id", ""),
-            existing.get("attribution", ""),
-            notes or existing.get("notes", ""),
-        ]], value_input_option="USER_ENTERED")
+
+        merged = {header: existing.get(header, "") for header in MAIN_HEADERS}
+        for key, value in updates.items():
+            if key in merged:
+                merged[key] = "" if value is None else str(value)
+
+        ordered_row = [merged.get(header, "") for header in MAIN_HEADERS]
+        last_col = self._column_letter(len(MAIN_HEADERS))
+        self.main_sheet.update(
+            f"A{row_number}:{last_col}{row_number}",
+            [ordered_row],
+            value_input_option="USER_ENTERED",
+        )
         return True
+
+    def get_rows_by_status(self, status: str) -> list[dict[str, str]]:
+        records = self.main_sheet.get_all_records(expected_headers=MAIN_HEADERS)
+        results: list[dict[str, str]] = []
+        for index, record in enumerate(records, start=2):
+            row = {key: str(value) for key, value in record.items()}
+            if row.get("status", "").strip() == status:
+                row["row_number"] = str(index)
+                results.append(row)
+        return results
+
+    def get_recent_rows(self, days: int, exclude_date: str | None = None) -> list[dict[str, str]]:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        records = self.main_sheet.get_all_records(expected_headers=MAIN_HEADERS)
+        recent: list[dict[str, str]] = []
+        for index, record in enumerate(records, start=2):
+            row = {key: str(value) for key, value in record.items()}
+            row_date = self._date_from_row(row.get("date", ""))
+            if row_date is None or row_date < cutoff:
+                continue
+            if exclude_date and row.get("date", "").strip() == exclude_date:
+                continue
+            row["row_number"] = str(index)
+            recent.append(row)
+        return recent
 
     def set_state(self, key: str, value: str) -> None:
         records = self.state_sheet.get_all_records(expected_headers=STATE_HEADERS)
