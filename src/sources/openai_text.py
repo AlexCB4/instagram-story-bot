@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import random
 import re
+from typing import Iterable
 
 from openai import OpenAI
+from openai import APIConnectionError, APIError, APITimeoutError, RateLimitError
 
 
 CAPTION_VARIATION_HINTS = [
@@ -13,6 +15,39 @@ CAPTION_VARIATION_HINTS = [
     "Use an uplifting tone with a new angle for this topic.",
     "Use a simple, modern tone and avoid cliché expressions.",
 ]
+
+
+def _trim_words(text: str, max_words: int) -> str:
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    return " ".join(words[:max_words]).strip()
+
+
+def _pick_first_non_empty(values: Iterable[str]) -> str:
+    for value in values:
+        clean = str(value or "").strip()
+        if clean:
+            return clean
+    return ""
+
+
+def _fallback_caption(topic: str, style: str, cta: str) -> str:
+    opener = _pick_first_non_empty([
+        topic,
+        "Inspiracion floral",
+    ])
+    tone = _pick_first_non_empty([
+        style,
+        "natural",
+    ])
+    call_to_action = _pick_first_non_empty([
+        cta,
+        "Escribenos para mas ideas",
+    ])
+    text = f"{opener}. Estilo {tone}. {call_to_action}"
+    # Keep fallback captions short to match existing constraints.
+    return _trim_words(_normalize_caption_whitespace(text), 20)
 
 
 def _normalize_caption_whitespace(text: str) -> str:
@@ -44,13 +79,20 @@ Requirements:
 - avoid repeating generic opening lines and repeated wording
 - return only the caption text, no hashtags
 """
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You write concise Instagram story copy."},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=120,
-        temperature=0.8,
-    )
-    return _normalize_caption_whitespace((response.choices[0].message.content or "").strip())
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You write concise Instagram story copy."},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=120,
+            temperature=0.8,
+        )
+        caption = _normalize_caption_whitespace((response.choices[0].message.content or "").strip())
+        if caption:
+            return caption
+    except (RateLimitError, APITimeoutError, APIConnectionError, APIError) as exc:
+        print(f"OpenAI caption generation unavailable ({type(exc).__name__}). Using local fallback caption.")
+
+    return _fallback_caption(topic=topic, style=style, cta=cta)
