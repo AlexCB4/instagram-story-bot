@@ -1,7 +1,8 @@
 monday:
   topic: "Inspiración floral del lunes"
   source: "nanobanana"
-  ai_prompt: "Ultra-detailed macro photograph of a single stunning flower in full bloom, soft natural light, luminous airy mood, blush and cream pastel background, dreamy bokeh, vertical 9:16 composition, negative space at top for text overlay, editorial quality"
+  use_input_image: true
+  ai_prompt: "Use the provided reference image as the base composition and transform it into an ultra-detailed macro floral editorial photo. Preserve the main subject structure while enhancing details, soft natural light, vertical 9:16, with negative space at top for text overlay."
   caption_hooks:
     - "Pregunta inspiracional"
     - "Frase corta positiva"
@@ -42,7 +43,8 @@ wednesday:
 thursday:
   topic: "Tendencias de moda floral"
   source: "nanobanana"
-  ai_prompt: "Modern fashion outfit with floral elements, minimalist editorial style, light pastel palette, blush peach sage and sky-blue accents, soft studio lighting, airy bright atmosphere, vertical 9:16 composition, negative space at top for title text"
+  use_input_image: true
+  ai_prompt: "Use the provided reference image as the base and restyle it into a modern floral fashion editorial scene. Preserve key shapes, soft studio lighting, airy bright mood, vertical 9:16, and clear negative space at top for title text."
   caption_hooks:
     - "Pregunta de estilo"
     - "Mini consejo fashion"
@@ -83,7 +85,8 @@ saturday:
 sunday:
   topic: "Recarga de energía para la semana. Domingo feliz. Disfruta el domingo."
   source: "nanobanana"
-  ai_prompt: "Peaceful Sunday morning scene with flowers, soft morning light, pastel cream and blush tones, cozy atmosphere, vertical 9:16 composition, negative space at top for text"
+  use_input_image: true
+  ai_prompt: "Use the provided reference image as the base and convert it into a peaceful Sunday floral scene. Keep the core subject from the reference while softening the mood with morning light, cozy pastel cream/blush tones, vertical 9:16 composition, and negative space at top for text."
   caption_hooks:
     - "Invitacion a pausar"
     - "Mensaje de calma"
