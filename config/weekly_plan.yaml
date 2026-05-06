@@ -13,11 +13,10 @@ monday:
     - "elegant"
   cta_variations:
     - "Feliz semana! Una nueva semana llena de flores te espera"
-    - "Comienza la semana con energia bonita"
+    - "Comienza la semana con energia floral"
     - "Cual es tu flor favorita para arrancar el lunes?"
   image_moods:
     - "airy editorial"
-    - "dreamy macro"
     - "soft natural"
   image_compositions:
     - "close-up with negative space"
@@ -31,32 +30,29 @@ tuesday:
   source: "owned"
   folder: "assets/owned"
   prompt_style: "product"
-  cta: "Escribenos para hacer tu pedido"
+  cta: "Descubre más modelos en nuestra página web"
 
 wednesday:
   topic: "Curiosidad floral del miercoles"
   source: "pexels"
   search_query: "beautiful single flower close up nature"
   prompt_style: "fun"
-  cta: "Sabias esto? Cuentanos en comentarios"
+  cta: "¿Sabías esto? Cuentanos en comentarios"
 
 thursday:
-  topic: "Tendencias de moda floral"
+  topic: "Pendientes de flores naturales"
   source: "nanobanana"
   use_input_image: true
   ai_prompt: "Use the provided reference image as the base and restyle it into a modern floral fashion editorial scene. Preserve key shapes, soft studio lighting, airy bright mood, vertical 9:16, and clear negative space at top for title text."
   caption_hooks:
-    - "Pregunta de estilo"
-    - "Mini consejo fashion"
-    - "Trend alert"
+    - "Pendientes de flores naturales"
   caption_tones:
     - "trendy"
     - "playful"
     - "stylish"
   cta_variations:
-    - "Te gustaria este look?"
-    - "Con cual accesorio lo combinarias?"
-    - "Lo usarias para una ocasion especial?"
+    - "¿Cuál es tu favorito?"
+    - "¿Lo usarías para una ocasión especial?"
   image_moods:
     - "clean minimal"
     - "runway inspired"
@@ -66,7 +62,7 @@ thursday:
     - "detail shot with texture"
     - "street-style angle"
   prompt_style: "trendy"
-  cta: "Te gustaria este look?"
+  cta: "Descubre más pendientes de flores en nuestra página web"
 
 friday:
   topic: "Nuestro producto del viernes"
